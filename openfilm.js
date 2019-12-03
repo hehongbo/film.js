@@ -2,34 +2,23 @@ class OpenFilm {
     constructor(targetElementName, layers, options) {
         // Receive `targetElementName` (the name of `div` element that holds canvas) during construct for future use.
         this.targetElementName = targetElementName;
-        // Construct `imgArr` and canvas element for each layer.
         layers.forEach(function (layer, id) {
-            // Build an array for images in each layers.
-            // It's similar to `layers` array except each element is an img element instead of url string.
-            //
-            // frameImgArr
-            // ├─ Array (frameImgArr[0])
-            // │  └─ img
-            // ├─ Array (frameImgArr[1])
-            // │  ├─ img
-            // │  ├─ img
-            // │  ├─ ...
-            // │  └─ img
-            // └─ Array (frameImgArr[2])
-            //    ├─ img
-            //    ├─ img
-            //    ├─ ...
-            //    └─ img
-
-            let imgArr = [];
-            // Take each url string in frames[] and generate corresponding img element. Image will load on generation.
+            // Copy everything from the `layers` parameter, except frames[] is made up of img element(s) instead of their URL.
+            let layerSlice = {
+                patch: layer.patch,
+                position: layer.patch ? layer.position : undefined,
+                startFrame: layer.startFrame,
+                endFrame: layer.startFrame + layer.frames.length - 1,
+                frames: []
+            };
             layer.frames.forEach(function (url) {
                 let imgElement = document.createElement("img");
                 imgElement.src = url;
-                imgArr = imgArr.concat([imgElement]);
+                layerSlice.frames = layerSlice.frames.concat([imgElement]);
             });
-            // Append each collected array into frameImgArr[], and create one with first element if not existed.
-            this.frameImgArr = (typeof this.frameImgArr !== 'undefined') ? this.frameImgArr.concat([imgArr]) : [imgArr];
+            // Append slice into this.layers[], and create one with first slice if not existed.
+            this.layers = (typeof this.layers !== 'undefined') ? this.layers.concat([layerSlice]) : [layerSlice];
+
             // Create a canvas element of this layer. All canvas elements should have the exact same size in its
             // attribute (Make sense for drawing) and "100%" in CSS styles (cover the entire div#targetElementName).
             let canvasElement = document.createElement("canvas");
@@ -57,5 +46,6 @@ class OpenFilm {
     }
 
     requireFrame(frameN) {
+        this.currentFrame = frameN;
     }
 }
