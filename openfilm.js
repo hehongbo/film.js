@@ -1,7 +1,4 @@
 class OpenFilm {
-    frameImgArr = [];
-    targetElementName;
-
     constructor(targetElementName, layers, options) {
         this.targetElementName = targetElementName;
         layers.forEach(function (layer, id) {
@@ -11,7 +8,7 @@ class OpenFilm {
                 imgElement.src = url;
                 imgArr = imgArr.concat([imgElement]);
             });
-            this.frameImgArr = this.frameImgArr.concat([imgArr]);
+            this.frameImgArr = (typeof this.frameImgArr !== 'undefined') ? this.frameImgArr.concat([imgArr]) : [imgArr];
             let canvasElement = document.createElement("canvas");
             canvasElement.height = options.height;
             canvasElement.width = options.width;
