@@ -45,7 +45,39 @@ class OpenFilm {
         this.requireFrame(0);
     }
 
+    // Method to require some specific frame on all layers.
     requireFrame(frameN) {
+        // Loop through all layers.
+        this.layers.forEach(function (layer, id) {
+            // We use the `currentFrame` field to indicate the current frame's number, compare with required ones during refresh,
+            // and store new value when complete. When calling this method for the first time, it will be 'undefined'.
+            if (typeof this.currentFrame === 'undefined') {
+                document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                    layer.frames[frameN],
+                    layer.patch ? layer.position.left : 0,
+                    layer.patch ? layer.position.top : 0);
+            } else if (frameN <= layer.startFrame) { // When the required frame is ahead of this layer's time range.
+                if (this.currentFrame > layer.startFrame) { // And was in between this layer's time range before.
+                    document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                        layer.frames[layer.startFrame], // Point to the first frame and stay here until going into this range.
+                        layer.patch ? layer.position.left : 0,
+                        layer.patch ? layer.position.top : 0);
+                }
+            } else if (frameN > layer.startFrame && frameN < layer.endFrame) { // When required frame is in this range.
+                document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                    layer.frames[frameN],
+                    layer.patch ? layer.position.left : 0,
+                    layer.patch ? layer.position.top : 0);
+            } else { // When required frame is behind this layer's time range. (Last possible condition)
+                if (this.currentFrame < layer.endFrame) { // And was in between this layer's time range before.
+                    document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                        layer.frames[layer.endFrame], // Point to the last frame and stay here until going into this range.
+                        layer.patch ? layer.position.left : 0,
+                        layer.patch ? layer.position.top : 0);
+                }
+            }
+        }.bind(this));
+        // Store new frame number.
         this.currentFrame = frameN;
     }
 }
