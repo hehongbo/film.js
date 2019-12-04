@@ -47,13 +47,15 @@ class OpenFilm {
 
     // Method to require some specific frame on all layers.
     requireFrame(frameN) {
+        // Failsafe for handling non-integer inputs from scrolling libraries.
+        let round = !Number.isInteger(frameN);
         // Loop through all layers.
         this.layers.forEach(function (layer, id) {
             // We use the `currentFrame` field to indicate the current frame's number, compare with required ones during refresh,
             // and store new value when complete. When calling this method for the first time, it will be 'undefined'.
             if (typeof this.currentFrame === 'undefined') {
                 document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                    layer.frames[frameN],
+                    !round ? layer.frames[frameN] : layer.frames[Math.round(frameN)],
                     layer.patch ? layer.position.left : 0,
                     layer.patch ? layer.position.top : 0);
             } else if (frameN <= layer.startFrame) { // When the required frame is ahead of this layer's time range.
@@ -65,7 +67,7 @@ class OpenFilm {
                 }
             } else if (frameN > layer.startFrame && frameN < layer.endFrame) { // When required frame is in this range.
                 document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                    layer.frames[frameN],
+                    !round ? layer.frames[frameN] : layer.frames[Math.round(frameN)],
                     layer.patch ? layer.position.left : 0,
                     layer.patch ? layer.position.top : 0);
             } else { // When required frame is behind this layer's time range. (Last possible condition)
@@ -78,6 +80,6 @@ class OpenFilm {
             }
         }.bind(this));
         // Store new frame number.
-        this.currentFrame = frameN;
+        this.currentFrame = !round ? frameN : Math.round(frameN);
     }
 }
