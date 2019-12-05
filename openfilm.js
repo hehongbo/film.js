@@ -104,6 +104,9 @@ class OpenFilm {
             }.bind(this));
             // Store new frame number.
             this.currentFrame = frameN;
+        } else {
+            console.warn("Frame " + frameN + " is required, but " + this.unpreparedFrameCount +
+                " assets are still loading in progress. Check connection if this continues.");
         }
     }
 }
