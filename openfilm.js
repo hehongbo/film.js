@@ -66,13 +66,9 @@ class OpenFilm {
             this.layers.forEach(function (layer, id) {
                 // We use the `currentFrame` field to indicate the current frame's number, compare with required ones during refresh,
                 // and store new value when complete. When calling this method for the first time, it will be 'undefined'.
-                if (typeof this.currentFrame === 'undefined') {
-                    document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                        !round ? layer.frames[frameN] : layer.frames[Math.round(frameN)],
-                        layer.patch ? layer.position.left : 0,
-                        layer.patch ? layer.position.top : 0);
-                } else if (frameN <= layer.startFrame) { // When the required frame is ahead of this layer's time range.
-                    if (this.currentFrame > layer.startFrame) { // And was in between this layer's time range before.
+                if (frameN <= layer.startFrame) { // When the required frame is ahead of this layer's time range.
+                    // And was in between this layer's time range before. (Or being called for the first time.)
+                    if (this.currentFrame > layer.startFrame || typeof this.currentFrame === 'undefined') {
                         document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
                             layer.frames[layer.startFrame], // Point to the first frame and stay here until going into this range.
                             layer.patch ? layer.position.left : 0,
@@ -84,7 +80,8 @@ class OpenFilm {
                         layer.patch ? layer.position.left : 0,
                         layer.patch ? layer.position.top : 0);
                 } else { // When required frame is behind this layer's time range. (Last possible condition)
-                    if (this.currentFrame < layer.endFrame) { // And was in between this layer's time range before.
+                    // And was in between this layer's time range before. (Or being called for the first time.)
+                    if (this.currentFrame < layer.endFrame || typeof this.currentFrame === 'undefined') {
                         document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
                             layer.frames[layer.endFrame], // Point to the last frame and stay here until going into this range.
                             layer.patch ? layer.position.left : 0,
