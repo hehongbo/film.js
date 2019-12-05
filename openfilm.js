@@ -52,8 +52,21 @@ class OpenFilm {
         document.getElementById(targetElementName).style.position = "relative";
         document.getElementById(targetElementName).style.objectFit = "cover";
 
-        // Load first frame.
-        this.requireFrame(0);
+        // Load first frame if required.
+        if (options.loadFirstFrame) {
+            // In case some assets are still unprepared (typically they do), we check `unpreparedFrameCount` variable
+            // and wait for them with a `waitForUnpreparedFrames` function. If every asset is prepared, trigger frame
+            // load. If not, register itself for a timeout callback to check later.
+            let waitForUnpreparedFrames = function () {
+                if (this.unpreparedFrameCount === 0) {
+                    this.requireFrame(0);
+                } else {
+                    console.log(this.unpreparedFrameCount + " asset(s) are still not ready yet. Retry in 0.5s.");
+                    setTimeout(waitForUnpreparedFrames, 500);
+                }
+            }.bind(this);
+            waitForUnpreparedFrames();
+        }
     }
 
     // Method to require some specific frame on all layers.
