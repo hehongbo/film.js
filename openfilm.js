@@ -51,6 +51,9 @@ class OpenFilm {
         // Set div#targetElementName's position to relative since we might have multiple overlapped canvas with absolute positions.
         document.getElementById(targetElementName).style.position = "relative";
         document.getElementById(targetElementName).style.objectFit = "cover";
+        // Set div#targetElementName's overflow to hidden since it's ratio may not necessarily be the same as the canvas
+        // inside. In some situations, this can avoid confusion for some libraries' size detection.
+        document.getElementById(targetElementName).style.overflow = "hidden";
 
         // Load first frame if required.
         if (options.loadFirstFrame) {
