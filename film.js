@@ -1,4 +1,4 @@
-class OpenFilm {
+class Film {
     constructor(targetElementName, layers, options) {
         // Receive `targetElementName` (the name of `div` element that holds canvas) during construct for future use.
         this.targetElementName = targetElementName;
