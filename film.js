@@ -86,20 +86,20 @@ class Film {
                     // And was in between this layer's time range before. (Or being called for the first time.)
                     if (this.currentFrame > layer.startFrame || typeof this.currentFrame === 'undefined') {
                         document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                            layer.frames[layer.startFrame], // Point to the first frame and stay here until going into this range.
+                            layer.frames[0], // Point to the first frame and stay here until going into this range.
                             layer.patch ? layer.position.left : 0,
                             layer.patch ? layer.position.top : 0);
                     }
                 } else if (frameN > layer.startFrame && frameN < layer.endFrame) { // When required frame is in this range.
                     document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                        layer.frames[frameN],
+                        layer.frames[frameN - layer.startFrame], // Minus `startFrame` if it's not zero.
                         layer.patch ? layer.position.left : 0,
                         layer.patch ? layer.position.top : 0);
                 } else { // When required frame is behind this layer's time range. (Last possible condition)
                     // And was in between this layer's time range before. (Or being called for the first time.)
                     if (this.currentFrame < layer.endFrame || typeof this.currentFrame === 'undefined') {
                         document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                            layer.frames[layer.endFrame], // Point to the last frame and stay here until going into this range.
+                            layer.frames[layer.endFrame - layer.startFrame], // Minus `startFrame` if it's not zero.
                             layer.patch ? layer.position.left : 0,
                             layer.patch ? layer.position.top : 0);
                     }
