@@ -2,6 +2,10 @@ class Film {
     constructor(targetElementName, layers, options) {
         // Receive `targetElementName` (the name of `div` element that holds canvas) during construct for future use.
         this.targetElementName = targetElementName;
+        this.properties = {
+            width: options.width,
+            height: options.height
+        };
         layers.forEach(function (layer, id) {
             // Create a counter for frames to load (on `id == 0`) or add up the counter (on `id > 0`).
             this.unpreparedFrameCount = (typeof this.unpreparedFrameCount !== 'undefined') ?
@@ -12,6 +16,7 @@ class Film {
                 position: layer.patch ? layer.position : undefined,
                 startFrame: layer.startFrame,
                 endFrame: layer.startFrame + layer.frames.length - 1,
+                freezing: (typeof layer.freezing !== 'undefined') ? layer.freezing : {"start": false, "end": false},
                 frames: []
             };
             layer.frames.forEach(function (url) {
@@ -85,10 +90,17 @@ class Film {
                 if (frameN <= layer.startFrame) { // When the required frame is ahead of this layer's time range.
                     // And was in between this layer's time range before. (Or being called for the first time.)
                     if (this.currentFrame > layer.startFrame || typeof this.currentFrame === 'undefined') {
-                        document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                            layer.frames[0], // Point to the first frame and stay here until going into this range.
-                            layer.patch ? layer.position.left : 0,
-                            layer.patch ? layer.position.top : 0);
+                        // Freeze at the first frame of this layer if required, or clear this layer otherwise.
+                        if (layer.freezing.start) {
+                            document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                                layer.frames[0], // Point to the first frame and stay here until going into this range.
+                                layer.patch ? layer.position.left : 0,
+                                layer.patch ? layer.position.top : 0);
+                        } else {
+                            document.getElementById(this.targetElementName).children[id].getContext("2d").clearRect(
+                                0, 0, this.properties.width, this.properties.height);
+                        }
+
                     }
                 } else if (frameN > layer.startFrame && frameN < layer.endFrame) { // When required frame is in this range.
                     document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
@@ -98,10 +110,16 @@ class Film {
                 } else { // When required frame is behind this layer's time range. (Last possible condition)
                     // And was in between this layer's time range before. (Or being called for the first time.)
                     if (this.currentFrame < layer.endFrame || typeof this.currentFrame === 'undefined') {
-                        document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
-                            layer.frames[layer.endFrame - layer.startFrame], // Minus `startFrame` if it's not zero.
-                            layer.patch ? layer.position.left : 0,
-                            layer.patch ? layer.position.top : 0);
+                        // Freeze at the last frame of this layer if required, or clear this layer otherwise.
+                        if (layer.freezing.end) {
+                            document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                                layer.frames[layer.endFrame - layer.startFrame], // Minus `startFrame` if it's not zero.
+                                layer.patch ? layer.position.left : 0,
+                                layer.patch ? layer.position.top : 0);
+                        } else {
+                            document.getElementById(this.targetElementName).children[id].getContext("2d").clearRect(
+                                0, 0, this.properties.width, this.properties.height);
+                        }
                     }
                 }
             }.bind(this));
