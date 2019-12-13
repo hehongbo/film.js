@@ -1,8 +1,8 @@
 class Film {
     constructor(targetElementName, layers, options) {
-        // Receive `targetElementName` (the name of `div` element that holds canvas) during construct for future use.
-        this.targetElementName = targetElementName;
+        // Receive properties from parameters for future use.
         this.properties = {
+            element: targetElementName, // the name of `div` element that holds canvas.
             width: options.width,
             height: options.height
         };
@@ -92,18 +92,18 @@ class Film {
                     if (this.currentFrame >= layer.startFrame || typeof this.currentFrame === 'undefined') {
                         // Freeze at the first frame of this layer if required, or clear this layer otherwise.
                         if (layer.freezing.start) {
-                            document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                            document.getElementById(this.properties.element).children[id].getContext("2d").drawImage(
                                 layer.frames[0], // Point to the first frame and stay here until going into this range.
                                 layer.patch ? layer.position.left : 0,
                                 layer.patch ? layer.position.top : 0);
                         } else {
-                            document.getElementById(this.targetElementName).children[id].getContext("2d").clearRect(
+                            document.getElementById(this.properties.element).children[id].getContext("2d").clearRect(
                                 0, 0, this.properties.width, this.properties.height);
                         }
 
                     }
                 } else if (frameN >= layer.startFrame && frameN <= layer.endFrame) { // When required frame is in this range.
-                    document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                    document.getElementById(this.properties.element).children[id].getContext("2d").drawImage(
                         layer.frames[frameN - layer.startFrame], // Minus `startFrame` if it's not zero.
                         layer.patch ? layer.position.left : 0,
                         layer.patch ? layer.position.top : 0);
@@ -112,12 +112,12 @@ class Film {
                     if (this.currentFrame <= layer.endFrame || typeof this.currentFrame === 'undefined') {
                         // Freeze at the last frame of this layer if required, or clear this layer otherwise.
                         if (layer.freezing.end) {
-                            document.getElementById(this.targetElementName).children[id].getContext("2d").drawImage(
+                            document.getElementById(this.properties.element).children[id].getContext("2d").drawImage(
                                 layer.frames[layer.endFrame - layer.startFrame], // Minus `startFrame` if it's not zero.
                                 layer.patch ? layer.position.left : 0,
                                 layer.patch ? layer.position.top : 0);
                         } else {
-                            document.getElementById(this.targetElementName).children[id].getContext("2d").clearRect(
+                            document.getElementById(this.properties.element).children[id].getContext("2d").clearRect(
                                 0, 0, this.properties.width, this.properties.height);
                         }
                     }
