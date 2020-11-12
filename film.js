@@ -1,8 +1,8 @@
 class Film {
-    constructor(targetElementName, layers, options) {
+    constructor(selectorTarget, layers, options) {
         // Receive properties from parameters for future use.
         this.properties = {
-            element: targetElementName, // the name of `div` element that holds canvas.
+            filmElement: document.querySelector(selectorTarget),
             width: options.width,
             height: options.height
         };
@@ -50,15 +50,16 @@ class Film {
                 canvasElement.style.left = "0";
                 canvasElement.zIndex = id;
             }
-            document.getElementById(targetElementName).appendChild(canvasElement);
+            this.properties.filmElement.appendChild(canvasElement);
         }.bind(this));
 
-        // Set div#targetElementName's position to relative since we might have multiple overlapped canvas with absolute positions.
-        document.getElementById(targetElementName).style.position = "relative";
-        document.getElementById(targetElementName).style.objectFit = "cover";
-        // Set div#targetElementName's overflow to hidden since it's ratio may not necessarily be the same as the canvas
+        // Set the Film element's position to relative since we might have multiple overlapped canvas with absolute
+        // positions.
+        this.properties.filmElement.style.position = "relative";
+        this.properties.filmElement.style.objectFit = "cover";
+        // Set the Film element's overflow to hidden since it's ratio may not necessarily be the same as the canvas
         // inside. In some situations, this can avoid confusion for some libraries' size detection.
-        document.getElementById(targetElementName).style.overflow = "hidden";
+        this.properties.filmElement.style.overflow = "hidden";
 
         // Load first frame if required.
         if (options.loadFirstFrame) {
@@ -92,18 +93,18 @@ class Film {
                     if (this.currentFrame >= layer.startFrame || typeof this.currentFrame === 'undefined') {
                         // Freeze at the first frame of this layer if required, or clear this layer otherwise.
                         if (layer.freezing.start) {
-                            document.getElementById(this.properties.element).children[id].getContext("2d").drawImage(
+                            this.properties.filmElement.children[id].getContext("2d").drawImage(
                                 layer.frames[0], // Point to the first frame and stay here until going into this range.
                                 layer.patch ? layer.position.left : 0,
                                 layer.patch ? layer.position.top : 0);
                         } else {
-                            document.getElementById(this.properties.element).children[id].getContext("2d").clearRect(
+                            this.properties.filmElement.children[id].getContext("2d").clearRect(
                                 0, 0, this.properties.width, this.properties.height);
                         }
 
                     }
                 } else if (frameN >= layer.startFrame && frameN <= layer.endFrame) { // When required frame is in this range.
-                    document.getElementById(this.properties.element).children[id].getContext("2d").drawImage(
+                    this.properties.filmElement.children[id].getContext("2d").drawImage(
                         layer.frames[frameN - layer.startFrame], // Minus `startFrame` if it's not zero.
                         layer.patch ? layer.position.left : 0,
                         layer.patch ? layer.position.top : 0);
@@ -112,12 +113,12 @@ class Film {
                     if (this.currentFrame <= layer.endFrame || typeof this.currentFrame === 'undefined') {
                         // Freeze at the last frame of this layer if required, or clear this layer otherwise.
                         if (layer.freezing.end) {
-                            document.getElementById(this.properties.element).children[id].getContext("2d").drawImage(
+                            this.properties.filmElement.children[id].getContext("2d").drawImage(
                                 layer.frames[layer.endFrame - layer.startFrame], // Minus `startFrame` if it's not zero.
                                 layer.patch ? layer.position.left : 0,
                                 layer.patch ? layer.position.top : 0);
                         } else {
-                            document.getElementById(this.properties.element).children[id].getContext("2d").clearRect(
+                            this.properties.filmElement.children[id].getContext("2d").clearRect(
                                 0, 0, this.properties.width, this.properties.height);
                         }
                     }
