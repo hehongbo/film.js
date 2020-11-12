@@ -132,3 +132,5 @@ class Film {
         }
     }
 }
+
+module.exports = Film;

@@ -1,0 +1,19 @@
+{
+  "name": "film",
+  "version": "0.1.0",
+  "description": "An animation-ready, multi-layer image sequence player written in Vanilla JS.",
+  "main": "film.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hehongbo/film.js.git"
+  },
+  "author": "Hongbo He",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hehongbo/film.js/issues"
+  },
+  "homepage": "https://github.com/hehongbo/film.js"
+}
