@@ -1,57 +1,21 @@
 class Film {
-    constructor(selectorTarget, layers, options) {
+    constructor(
+        selectorTarget = "",
+        layers = [],
+        options = {
+            width: 0,
+            height: 0,
+            skipLoading: false,
+            loadFirstFrame: false
+        }
+    ) {
         // Receive properties from parameters for future use.
         this.properties = {
             filmElement: document.querySelector(selectorTarget),
             width: options.width,
-            height: options.height
+            height: options.height,
+            layers: layers
         };
-        layers.forEach(function (layer, id) {
-            // Create a counter for frames to load (on `id == 0`) or add up the counter (on `id > 0`).
-            this.unpreparedFrameCount = (typeof this.unpreparedFrameCount !== 'undefined') ?
-                this.unpreparedFrameCount + layer.frames.length : layer.frames.length;
-            // Copy everything from the `layers` parameter, except frames[] is made up of img element(s) instead of their URL.
-            let layerSlice = {
-                patch: layer.patch,
-                position: layer.patch ? layer.position : undefined,
-                startFrame: layer.startFrame,
-                endFrame: layer.startFrame + layer.frames.length - 1,
-                freezing: (typeof layer.freezing !== 'undefined') ? layer.freezing : {"start": false, "end": false},
-                frames: []
-            };
-            layer.frames.forEach(function (url) {
-                // Create an img element.
-                let imgElement = document.createElement("img");
-                // Add a one-time event listener before putting the URL into imgElement's attribute. This will result in
-                // the image being load. When loading is complete, the registered callback function will decrease the
-                // counter by one. So `unpreparedFrameCount === 0` indicates that assets of this instance are fully
-                // loaded.
-                imgElement.addEventListener("load", function () {
-                    this.unpreparedFrameCount = this.unpreparedFrameCount - 1;
-                }.bind(this), {once: true});
-                imgElement.src = url;
-                layerSlice.frames = layerSlice.frames.concat([imgElement]);
-            }.bind(this));
-            // Append slice into this.layers[], and create one with first slice if not existed.
-            this.layers = (typeof this.layers !== 'undefined') ? this.layers.concat([layerSlice]) : [layerSlice];
-
-            // Create a canvas element of this layer. All canvas elements should have the exact same size in its
-            // attribute (Make sense for drawing) and "100%" in CSS styles (cover the entire div#targetElementName).
-            let canvasElement = document.createElement("canvas");
-            canvasElement.height = options.height;
-            canvasElement.width = options.width;
-            canvasElement.style.width = "100%";
-            canvasElement.style.height = "100%";
-            canvasElement.style.objectFit = "cover";
-            // Except the first layer's canvas, every canvas should aligned in top-left corner and have absolute position.
-            if (id !== 0) {
-                canvasElement.style.position = "absolute";
-                canvasElement.style.top = "0";
-                canvasElement.style.left = "0";
-                canvasElement.zIndex = id;
-            }
-            this.properties.filmElement.appendChild(canvasElement);
-        }.bind(this));
 
         // Set the Film element's position to relative since we might have multiple overlapped canvas with absolute
         // positions.
@@ -61,21 +25,79 @@ class Film {
         // inside. In some situations, this can avoid confusion for some libraries' size detection.
         this.properties.filmElement.style.overflow = "hidden";
 
-        // Load first frame if required.
-        if (options.loadFirstFrame) {
-            // In case some assets are still unprepared (typically they do), we check `unpreparedFrameCount` variable
-            // and wait for them with a `waitForUnpreparedFrames` function. If every asset is prepared, trigger frame
-            // load. If not, register itself for a timeout callback to check later.
-            let waitForUnpreparedFrames = function () {
-                if (this.unpreparedFrameCount === 0) {
-                    this.requireFrame(0);
-                } else {
-                    console.log(this.unpreparedFrameCount + " asset(s) are still not ready yet. Retry in 0.5s.");
-                    setTimeout(waitForUnpreparedFrames, 500);
-                }
-            }.bind(this);
-            waitForUnpreparedFrames();
+        // Kick off the loading procedure by default, unless pass skipLoading=true in the options.
+        if (!options.skipLoading) {
+            this.load(options.loadFirstFrame).then();
         }
+    }
+
+    load(loadFirstFrame = false) {
+        // Template function to assemble each layer, return a Promise that resolves to an Object represents this layer.
+        let loadLayer = (layerProperty, layerId) => {
+            return new Promise(resolve => {
+                // Set down a counter and decrease it with the "load" event listener after each img element is load.
+                let pendingFrameCount = layerProperty.frames.length;
+                let layerObject = {
+                    patch: layerProperty.patch,
+                    position: layerProperty.patch ? layerProperty.position : undefined,
+                    startFrame: layerProperty.startFrame,
+                    endFrame: layerProperty.startFrame + layerProperty.frames.length - 1,
+                    freezing: (typeof layerProperty.freezing !== 'undefined') ?
+                        layerProperty.freezing : {"start": false, "end": false},
+                    frames: []
+                };
+                layerProperty.frames.forEach(url => {
+                    // Create an img element.
+                    let imgElement = document.createElement("img");
+                    // Add an event listener callback to decrease the counter by one, and resolve the Promise when the
+                    // counter hits zero.
+                    imgElement.addEventListener("load", () => {
+                        pendingFrameCount--;
+                        if (pendingFrameCount === 0) {
+                            resolve(layerObject);
+                        }
+                    }, {once: true});
+                    // Put in the URL. That will result in the image being load, followed by the event listener defined
+                    // above being triggered.
+                    imgElement.src = url;
+                    // Push the image element into the `frames` array in the layer's Object. It will finish the loading
+                    // process and become usable eventually.
+                    layerObject.frames.push(imgElement);
+                });
+                // Create a canvas element of this layer. All canvas elements should have the exact same size in its
+                // attribute (Make sense for drawing) and "100%" in CSS styles (cover the entire div#targetElementName).
+                let canvasElement = document.createElement("canvas");
+                canvasElement.height = this.properties.height;
+                canvasElement.width = this.properties.width;
+                canvasElement.style.width = "100%";
+                canvasElement.style.height = "100%";
+                canvasElement.style.objectFit = "cover";
+                // Except the first layer's canvas, every canvas should aligned in top-left corner and have absolute
+                // position.
+                if (layerId !== 0) {
+                    canvasElement.style.position = "absolute";
+                    canvasElement.style.top = "0";
+                    canvasElement.style.left = "0";
+                    canvasElement.zIndex = layerId;
+                }
+                this.properties.filmElement.appendChild(canvasElement);
+            });
+        };
+
+        // Traverse each layer defined in the argument, trigger the `loadLayer()` function one by one and collect these
+        // Promise Object together in an array.
+        let pendingLayers = [];
+        this.properties.layers.forEach((layer, id) => {
+            pendingLayers.push(loadLayer(layer, id));
+        });
+
+        // Combine these Promises above, resolve and return the resulting Promise.
+        return Promise.all(pendingLayers).then(resolvedAllLayers => {
+            this.layers = resolvedAllLayers;
+            if (loadFirstFrame) {
+                this.requireFrame(0);
+            }
+        });
     }
 
     // Method to require some specific frame on all layers.
@@ -83,11 +105,12 @@ class Film {
         // Failsafe for handling non-integer inputs from scrolling libraries.
         frameN = Math.round(frameN);
         // Make sure there's no unprepared frames or otherwise `drawImage()` will fail.
-        if (this.unpreparedFrameCount === 0) {
+        if (this.layers) {
             // Loop through all layers.
-            this.layers.forEach(function (layer, id) {
-                // We use the `currentFrame` field to indicate the current frame's number, compare with required ones during refresh,
-                // and store new value when complete. When calling this method for the first time, it will be 'undefined'.
+            this.layers.forEach((layer, id) => {
+                // We use the `currentFrame` field to indicate the current frame's number, compare with required ones
+                // during refresh, and store new value when complete. When calling this method for the first time,
+                // it will be 'undefined'.
                 if (frameN < layer.startFrame) { // When the required frame is ahead of this layer's time range.
                     // And was in between this layer's time range before. (Or being called for the first time.)
                     if (this.currentFrame >= layer.startFrame || typeof this.currentFrame === 'undefined') {
@@ -103,7 +126,8 @@ class Film {
                         }
 
                     }
-                } else if (frameN >= layer.startFrame && frameN <= layer.endFrame) { // When required frame is in this range.
+                } else if (frameN >= layer.startFrame && frameN <= layer.endFrame) {
+                    // When required frame is in this range.
                     this.properties.filmElement.children[id].getContext("2d").drawImage(
                         layer.frames[frameN - layer.startFrame], // Minus `startFrame` if it's not zero.
                         layer.patch ? layer.position.left : 0,
@@ -123,12 +147,9 @@ class Film {
                         }
                     }
                 }
-            }.bind(this));
+            });
             // Store new frame number.
             this.currentFrame = frameN;
-        } else {
-            console.warn("Frame " + frameN + " is required, but " + this.unpreparedFrameCount +
-                " assets are still loading in progress. Check connection if this continues.");
         }
     }
 }
